@@ -62,6 +62,20 @@
                 </a>
             </li>
         </ul>
+        <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#">
+                        <i class="ph ph-user"></i> Profil
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" style="color: var(--danger);" onmouseover="this.style.backgroundColor='rgba(231, 76, 60, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+                        <i class="ph ph-sign-out"></i> Keluar
+                    </a>
+                </li>
+            </ul>
+        </div>
     </aside>
 
     <!-- MAIN WRAPPER -->

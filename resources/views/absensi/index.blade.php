@@ -21,13 +21,14 @@
                     <th>Jam Masuk</th>
                     <th>Jam Keluar</th>
                     <th>Status</th>
-                    <th>Keterangan</th>
+                    <th>Lokasi</th>
+                    <th>Foto</th>
                 </tr>
             </thead>
             <tbody>
                 @if(isset($connected) && !$connected)
                 <tr>
-                    <td colspan="6">
+                    <td colspan="7">
                         <div style="color: var(--accent-red); font-weight: 500;">
                             <i class="ph ph-warning"></i> Gagal terhubung ke Firebase: {{ $error }}
                         </div>
@@ -37,10 +38,35 @@
 
                 @forelse($absensi as $ab)
                 <tr>
-                    <td>{{ isset($ab['date']) ? \Carbon\Carbon::parse($ab['date'])->format('d M Y') : (isset($ab['createdAt']) ? \Carbon\Carbon::parse($ab['createdAt'])->format('d M Y') : '-') }}</td>
+                    <td>
+                        @php
+                            $tanggal = $ab['date'] ?? $ab['createdAt'] ?? $ab['timestamp'] ?? null;
+                        @endphp
+                        {{ $tanggal ? \Carbon\Carbon::parse($tanggal)->format('d M Y') : '-' }}
+                    </td>
                     <td><div style="font-weight: 600">{{ $ab['pegawai'] ?? $ab['name'] ?? $ab['nama'] ?? '-' }}</div></td>
-                    <td>{{ $ab['timeIn'] ?? $ab['jam_masuk'] ?? '-' }}</td>
-                    <td>{{ $ab['timeOut'] ?? $ab['jam_keluar'] ?? '-' }}</td>
+                    <td>
+                        @if(isset($ab['jam_masuk']))
+                            {{ $ab['jam_masuk'] }}
+                        @elseif(isset($ab['timeIn']))
+                            {{ $ab['timeIn'] }}
+                        @elseif(isset($ab['timestamp']) && strtolower($ab['status'] ?? '') == 'masuk')
+                            {{ \Carbon\Carbon::parse($ab['timestamp'])->format('H:i') }}
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td>
+                        @if(isset($ab['jam_keluar']))
+                            {{ $ab['jam_keluar'] }}
+                        @elseif(isset($ab['timeOut']))
+                            {{ $ab['timeOut'] }}
+                        @elseif(isset($ab['timestamp']) && strtolower($ab['status'] ?? '') == 'keluar')
+                            {{ \Carbon\Carbon::parse($ab['timestamp'])->format('H:i') }}
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td>
                         @php
                             $status = $ab['status'] ?? 'Hadir';
@@ -55,12 +81,40 @@
                         @endphp
                         <span class="badge" style="{{ $badgeStyle }}">{{ ucfirst($status) }}</span>
                     </td>
-                    <td>{{ $ab['keterangan'] ?? $ab['note'] ?? '-' }}</td>
+                    <td>
+                        @if(isset($ab['keterangan']))
+                            {{ $ab['keterangan'] }}
+                        @elseif(isset($ab['note']))
+                            {{ $ab['note'] }}
+                        @elseif(isset($ab['latitude']) && isset($ab['longitude']))
+                            <div style="font-size: 0.9em; line-height: 1.4;">
+                                Jarak: {{ isset($ab['distance']) ? round($ab['distance']) . 'm' : '-' }} 
+                                ({{ isset($ab['isInRange']) && $ab['isInRange'] ? 'Dalam Radius' : 'Luar Radius' }})
+                                <br>
+                                <a href="https://maps.google.com/?q={{ $ab['latitude'] }},{{ $ab['longitude'] }}" target="_blank" style="color: var(--primary-color); text-decoration: underline;">Buka Maps</a>
+                            </div>
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td>
+                        @if(isset($ab['photoPath']) && $ab['photoPath'] != '')
+                            @if(Str::startsWith($ab['photoPath'], 'http'))
+                                <a href="{{ $ab['photoPath'] }}" target="_blank" title="Lihat Foto Full">
+                                    <img src="{{ $ab['photoPath'] }}" alt="Foto" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(0,0,0,0.1);">
+                                </a>
+                            @else
+                                <span style="font-size: 0.85em; color: var(--text-secondary); cursor: help;" title="{{ $ab['photoPath'] }}">Tersimpan di HP</span>
+                            @endif
+                        @else
+                            <span style="color: #999;">-</span>
+                        @endif
+                    </td>
                 </tr>
                 @empty
                 @if(isset($connected) && $connected)
                 <tr>
-                    <td colspan="6" style="text-align: center; color: var(--text-secondary);">Belum ada data absensi</td>
+                    <td colspan="7" style="text-align: center; color: var(--text-secondary);">Belum ada data absensi</td>
                 </tr>
                 @endif
                 @endforelse
