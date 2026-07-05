@@ -1,0 +1,337 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Color Palette */
+    --bg-dark: #042F24;
+    --card-bg: #0F5C4A;
+    --card-bg-hover: #137059;
+    --accent-green: #1DA076;
+    --text-primary: #FFFFFF;
+    --text-secondary: #A3C6BC;
+    --text-dark: #042F24;
+    --bg-light: #EAF4EB;
+    
+    /* System Colors */
+    --danger: #E74C3C;
+    --warning: #F1C40F;
+    --info: #3498DB;
+    
+    /* Variables */
+    --sidebar-width: 260px;
+    --border-radius-lg: 24px;
+    --border-radius-md: 16px;
+    --border-radius-sm: 8px;
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.15);
+    --shadow-glow: 0 0 20px rgba(29, 160, 118, 0.3);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: #021e17;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.brand {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 40px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.brand i { color: var(--accent-green); font-size: 28px; }
+
+.nav-menu {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nav-item a {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: var(--border-radius-sm);
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.nav-item a:hover {
+    background-color: rgba(29, 160, 118, 0.1);
+    color: var(--text-primary);
+}
+
+.nav-item a.active {
+    background-color: var(--accent-green);
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(29, 160, 118, 0.4);
+}
+
+.nav-item i {
+    font-size: 22px;
+}
+
+/* MAIN CONTENT */
+.main-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: radial-gradient(circle at top right, #094736, var(--bg-dark));
+    overflow-y: auto;
+}
+
+/* TOPBAR */
+.topbar {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: rgba(4, 47, 36, 0.8);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.topbar-title {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.notification-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 24px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.3s;
+}
+
+.notification-btn:hover { color: var(--text-primary); }
+
+.notification-badge {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    width: 10px;
+    height: 10px;
+    background-color: var(--danger);
+    border-radius: 50%;
+    border: 2px solid var(--bg-dark);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 6px 16px 6px 6px;
+    border-radius: 50px;
+    cursor: pointer;
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--accent-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+/* CONTENT CONTAINER */
+.content {
+    padding: 32px;
+}
+
+/* SUMMARY CARDS */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.3s ease;
+}
+.stat-card:hover { transform: translateY(-4px); }
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    background-color: rgba(29, 160, 118, 0.2);
+    color: var(--accent-green);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+}
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+/* CHARTS & TABLES */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+@media (max-width: 1024px) {
+    .dashboard-grid { grid-template-columns: 1fr; }
+}
+
+.card {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 24px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* TABLES */
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 16px; color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+td { padding: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+
+.badge { padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; display: inline-block; }
+.badge.masuk { background-color: rgba(52, 152, 219, 0.2); color: var(--info); border: 1px solid rgba(52, 152, 219, 0.3); }
+.badge.proses { background-color: rgba(241, 196, 15, 0.2); color: var(--warning); border: 1px solid rgba(241, 196, 15, 0.3); }
+.badge.selesai { background-color: rgba(29, 160, 118, 0.2); color: var(--accent-green); border: 1px solid rgba(29, 160, 118, 0.3); }
+
+/* BUTTONS */
+.btn {
+    padding: 10px 20px;
+    border-radius: var(--border-radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+.btn-primary { background-color: var(--accent-green); color: white; }
+.btn-primary:hover { filter: brightness(1.1); box-shadow: 0 4px 12px rgba(29, 160, 118, 0.4); }
+.btn-outline { background-color: transparent; border: 1px solid var(--text-secondary); color: var(--text-primary); }
+.btn-outline:hover { background-color: rgba(255, 255, 255, 0.05); }
+
+/* FILTERS */
+.filter-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.form-control {
+    background-color: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: white;
+    padding: 10px 16px;
+    border-radius: var(--border-radius-sm);
+    outline: none;
+}
+.form-control:focus { border-color: var(--accent-green); }
+
+/* CUSTOM SCROLLBAR FOR CHART */
+.chart-scroll-container {
+    width: 100%; 
+    overflow-x: auto; 
+    overflow-y: hidden; 
+    padding-bottom: 15px;
+    /* Dukungan untuk Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #95A5A6 rgba(255, 255, 255, 0.05);
+}
+
+/* Chrome, Edge, Safari */
+.chart-scroll-container::-webkit-scrollbar {
+    height: 14px; /* Dibuat lebih tebal agar mudah digeser */
+}
+
+.chart-scroll-container::-webkit-scrollbar-track {
+    background: transparent; /* Transparan agar menyatu dengan background grafik */
+    border-radius: 20px;
+}
+
+.chart-scroll-container::-webkit-scrollbar-thumb {
+    background: #7F8C8D; /* Warna abu-abu terang mirip di gambar */
+    border-radius: 20px;
+    border: 4px solid #0F5C4A; /* Warna sama dengan background card agar menyatu (padding palsu) */
+}
+
+.chart-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #BDC3C7; 
+}
