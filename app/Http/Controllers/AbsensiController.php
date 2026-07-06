@@ -18,12 +18,14 @@ class AbsensiController extends Controller
             $todaySakit = 0;
             $todayAlpa = 0;
             
+            $activeBranch = session('activeBranch', 'global');
+            
             // Ambil dari koleksi 'attendance' (global) dengan limit untuk mencegah out of memory
-            // Sebaiknya ditambah orderBy date descending jika ada index
-            $attendanceRef = $firestore->collection('attendance')
-                // ->orderBy('date', 'DESC') // Uncomment jika index sudah dibuat di firebase
-                ->limit(100)
-                ->documents();
+            $attQuery = $firestore->collection('attendance');
+            if ($activeBranch !== 'global') {
+                $attQuery = $attQuery->where('branchId', '==', $activeBranch);
+            }
+            $attendanceRef = $attQuery->limit(100)->documents();
 
             foreach ($attendanceRef as $doc) {
                 if (!$doc->exists()) continue;
@@ -34,10 +36,19 @@ class AbsensiController extends Controller
             }
 
             // Fallback (jika data belum dimigrasi ke global attendance, baca 50 terakhir dari sub-collection)
-            // Ini bisa dihapus jika aplikasi kasir sudah 100% menggunakan global attendance
             if (empty($absensi)) {
-                $usersRef = $firestore->collection('users')->documents();
-                foreach ($usersRef as $userDoc) {
+                if ($activeBranch !== 'global') {
+                    $userDoc = $firestore->collection('users')->document($activeBranch)->snapshot();
+                    if ($userDoc->exists()) {
+                        $usersToProcess = [$userDoc];
+                    } else {
+                        $usersToProcess = [];
+                    }
+                } else {
+                    $usersToProcess = $firestore->collection('users')->documents();
+                }
+
+                foreach ($usersToProcess as $userDoc) {
                     if (!$userDoc->exists()) continue;
                     $userData = $userDoc->data();
                     $userId = $userDoc->id();

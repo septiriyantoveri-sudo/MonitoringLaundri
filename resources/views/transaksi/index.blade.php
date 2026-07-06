@@ -57,7 +57,7 @@
                     @php
                         $isPaid = $tx['isPaid'] ?? false;
                         $paymentMethod = $tx['paymentMethod'] ?? '-';
-                        $paymentColor = $isPaid ? 'var(--accent-green)' : 'var(--accent-red)';
+                        $paymentColor = $isPaid ? 'var(--success)' : 'var(--danger)';
                         $paymentText = $isPaid ? 'Lunas' : 'Belum Bayar';
                     @endphp
                     <div style="font-weight: 600; color: {{ $paymentColor }}">{{ $paymentText }}</div>

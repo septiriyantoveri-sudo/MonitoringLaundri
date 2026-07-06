@@ -13,12 +13,14 @@ class TransaksiController extends Controller
             
             $transactions = [];
             
+            $activeBranch = session('activeBranch', 'global');
+            
             // Baca dari global collection 'orders' dengan limit untuk performa
-            // Sebaiknya ditambah orderBy createdAt descending jika index sudah ada
-            $ordersRef = $firestore->collection('orders')
-                // ->orderBy('createdAt', 'DESC') // Uncomment jika sudah buat index di Firestore
-                ->limit(50)
-                ->documents();
+            $ordersQuery = $firestore->collection('orders');
+            if ($activeBranch !== 'global') {
+                $ordersQuery = $ordersQuery->where('branchId', '==', $activeBranch);
+            }
+            $ordersRef = $ordersQuery->limit(50)->documents();
 
             foreach ($ordersRef as $doc) {
                 if (!$doc->exists()) continue;
@@ -30,10 +32,20 @@ class TransaksiController extends Controller
             }
 
             // Fallback (jika data belum dimigrasi ke global orders, baca 10 terakhir per user dari sub-collection)
-            // Ini bisa dihapus jika aplikasi kasir sudah 100% menggunakan global orders
             if (empty($transactions)) {
-                $usersRef = $firestore->collection('users')->documents();
-                foreach ($usersRef as $userDoc) {
+                if ($activeBranch !== 'global') {
+                    // Hanya satu user
+                    $userDoc = $firestore->collection('users')->document($activeBranch)->snapshot();
+                    if ($userDoc->exists()) {
+                        $usersToProcess = [$userDoc];
+                    } else {
+                        $usersToProcess = [];
+                    }
+                } else {
+                    $usersToProcess = $firestore->collection('users')->documents();
+                }
+
+                foreach ($usersToProcess as $userDoc) {
                     if (!$userDoc->exists()) continue;
                     $userData = $userDoc->data();
                     $userId = $userDoc->id();

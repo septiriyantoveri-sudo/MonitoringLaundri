@@ -56,6 +56,12 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a href="{{ route('inventaris.index') }}"
+                    class="{{ request()->routeIs('inventaris.*') ? 'active' : '' }}">
+                    <i class="ph ph-package"></i> Inventaris
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="{{ route('pengeluaran.index') }}"
                     class="{{ request()->routeIs('pengeluaran.*') ? 'active' : '' }}">
                     <i class="ph ph-money"></i> Pengeluaran
@@ -84,6 +90,23 @@
         <header class="topbar">
             <div class="topbar-title">@yield('page_title', 'Dashboard')</div>
             <div class="topbar-actions">
+                <!-- Global Branch Selector -->
+                <form id="branchForm" action="{{ route('set-branch') }}" method="POST" style="margin: 0;">
+                    @csrf
+                    <div style="display: flex; align-items: center; gap: 8px; background-color: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1);">
+                        <i class="ph ph-storefront" style="color: var(--accent-green); font-size: 18px;"></i>
+                        <select name="branch_id" id="globalBranchSelector" onchange="document.getElementById('branchForm').submit();" style="background: transparent; border: none; color: white; outline: none; font-weight: 500; font-size: 14px; cursor: pointer; appearance: none; padding-right: 16px;">
+                            <option style="color: black" value="global" {{ session('activeBranch', 'global') === 'global' ? 'selected' : '' }}>Semua Cabang / Toko</option>
+                            @if(isset($branches))
+                                @foreach($branches as $id => $name)
+                                    <option style="color: black" value="{{ $id }}" {{ session('activeBranch') === $id ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <i class="ph ph-caret-down" style="font-size: 12px; color: var(--text-secondary); margin-left: -12px; pointer-events: none;"></i>
+                    </div>
+                </form>
+
                 @yield('topbar_actions')
 
                 <button class="notification-btn">
@@ -108,19 +131,7 @@
 
     @stack('scripts')
     <script>
-        // Simpan pilihan cabang agar tidak reset saat pindah halaman
-        const branchSelector = document.getElementById('globalBranchSelector');
-        if (branchSelector) {
-            const savedBranch = localStorage.getItem('selectedBranch');
-            if (savedBranch) {
-                branchSelector.value = savedBranch;
-            }
 
-            branchSelector.addEventListener('change', function () {
-                localStorage.setItem('selectedBranch', this.value);
-                // Kita menghapus window.location.reload() agar dashboard bisa 100% realtime tanpa refresh
-            });
-        }
     </script>
 </body>
 

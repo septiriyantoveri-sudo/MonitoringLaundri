@@ -6,18 +6,7 @@
 @section('title', 'Dashboard')
 @section('page_title', 'Ringkasan Hari Ini')
 
-@section('topbar_actions')
-<!-- Branch Selector -->
-<div style="display: flex; align-items: center; gap: 8px; background-color: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1);">
-    <i class="ph ph-storefront" style="color: var(--accent-green); font-size: 18px;"></i>
-    <select id="globalBranchSelector" style="background: transparent; border: none; color: white; outline: none; font-weight: 500; font-size: 14px; cursor: pointer; appearance: none; padding-right: 16px;">
-        <option style="color: black" value="global">Semua Cabang (A-J)</option>
-        <option style="color: black" value="branch_001">Cabang A (Pusat)</option>
-        <option style="color: black" value="branch_002">Cabang B (Melati)</option>
-    </select>
-    <i class="ph ph-caret-down" style="font-size: 12px; color: var(--text-secondary); margin-left: -12px; pointer-events: none;"></i>
-</div>
-@endsection
+
 
 @section('content')
 <!-- Connection Status -->
@@ -101,26 +90,7 @@
         </div>
     </div>
 
-    <!-- Recent Transactions List -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title">Transaksi Terbaru</h2>
-            <a href="{{ route('transaksi.index') }}" style="color: var(--accent-green); text-decoration: none; font-size: 14px;">Lihat Semua</a>
-        </div>
-        <table style="font-size: 14px;">
-            <thead>
-                <tr>
-                    <th>Pelanggan</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="recentTransactionsTable">
-                <tr>
-                    <td colspan="2" style="text-align: center; color: var(--text-secondary);">Memuat data realtime...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+
 </div>
 @endsection
 
@@ -168,7 +138,8 @@
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return 'Rp ' + (value/1000) + 'k'; } } } }
+            scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return 'Rp ' + (value/1000) + 'k'; }, color: '#FFFFFF' } }, x: { ticks: { color: '#FFFFFF' } } },
+            plugins: { legend: { labels: { color: '#FFFFFF' } } }
         }
     });
 
@@ -183,8 +154,8 @@
 
     // Variabel state untuk menyimpan data chart
     let globalChartData = {
-        harian: { labels: [], datasets: [{ label: 'Pendapatan', data: [], backgroundColor: '#1DA076', borderRadius: 4 }] },
-        bulanan: { labels: [], datasets: [{ label: 'Pendapatan', data: [], backgroundColor: '#1DA076', borderRadius: 4 }] }
+        harian: { labels: [], datasets: [{ label: 'Pendapatan', data: [], backgroundColor: '#D4AF37', borderRadius: 6 }] },
+        bulanan: { labels: [], datasets: [{ label: 'Pendapatan', data: [], backgroundColor: '#14B8A6', borderRadius: 6 }] }
     };
 
     // Fungsi utilitas untuk format rupiah
@@ -240,7 +211,7 @@
                     labels: sortedServices.length > 0 ? sortedServices.map(s => s[0]) : ['Belum ada data'],
                     datasets: [{
                         data: sortedServices.length > 0 ? sortedServices.map(s => s[1]) : [1],
-                        backgroundColor: ['#1DA076', '#3498DB', '#F1C40F', '#E74C3C', '#9B59B6'],
+                        backgroundColor: ['#D4AF37', '#14B8A6', '#3B82F6', '#8B5CF6', '#F43F5E'],
                         borderWidth: 0
                     }]
                 };
@@ -257,43 +228,7 @@
         // 3. Ambil data Harian dan Bulanan historis untuk Chart (Sekali ambil, tidak perlu realtime berlebihan)
         loadChartDataHistoris();
 
-        // 4. Listen Transaksi Terbaru (5 data terakhir)
-        let ordersQuery;
-        if (activeBranch === 'global') {
-            ordersQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(5));
-        } else {
-            ordersQuery = query(collection(db, 'orders'), where('branchId', '==', activeBranch), orderBy('createdAt', 'desc'), limit(5));
-        }
 
-        unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
-            const tableBody = document.getElementById('recentTransactionsTable');
-            tableBody.innerHTML = ''; // Kosongkan tabel
-            
-            if (snapshot.empty) {
-                tableBody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: var(--text-secondary);">Belum ada transaksi</td></tr>';
-                return;
-            }
-
-            snapshot.forEach((docSnap) => {
-                const tx = docSnap.data();
-                let status = tx.status || tx.orderStatus || 'Pesanan Diterima';
-                let badgeClass = 'masuk';
-                if (status.includes('Selesai') || status.includes('Diambil')) badgeClass = 'selesai';
-                else if (status.includes('Dicuci') || status.includes('Diproses')) badgeClass = 'proses';
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>
-                        <div style="font-weight: 600">${tx.customerName || tx.customer?.name || 'Pelanggan'}</div>
-                        <div style="color: var(--text-secondary); font-size: 12px;">${formatRp(tx.total || tx.totalAmount)}</div>
-                    </td>
-                    <td>
-                        <span class="badge ${badgeClass}">${status}</span>
-                    </td>
-                `;
-                tableBody.appendChild(tr);
-            });
-        });
     }
 
     async function loadChartDataHistoris() {

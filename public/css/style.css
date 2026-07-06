@@ -1,28 +1,46 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-    /* Color Palette */
-    --bg-dark: #042F24;
-    --card-bg: #0F5C4A;
-    --card-bg-hover: #137059;
-    --accent-green: #1DA076;
+    /* Color Palette - Matching Mobile UI */
+    --bg-dark: #063124;
+    /* Deep forest green */
+    --sidebar-bg: #042419;
+
+    /* Card is now transparent with border */
+    --card-bg: transparent;
+    --card-bg-hover: rgba(255, 255, 255, 0.03);
+
+    /* Lis / Border for sections */
+    --section-border: rgba(255, 255, 255, 0.15);
+
+    --accent-primary: #1DA076;
+    /* Standard green */
+    --accent-primary-hover: #14845F;
+    --accent-secondary: #F59E0B;
+
+    /* Text colors */
     --text-primary: #FFFFFF;
+    /* For dark bg */
     --text-secondary: #A3C6BC;
-    --text-dark: #042F24;
-    --bg-light: #EAF4EB;
-    
+    /* For dark bg */
+    --text-dark: #FFFFFF;
+    /* Reverted to white */
+    --text-dark-muted: #A3C6BC;
+    /* Reverted to light green */
+
     /* System Colors */
-    --danger: #E74C3C;
-    --warning: #F1C40F;
-    --info: #3498DB;
-    
+    --danger: #EF4444;
+    --warning: #F59E0B;
+    --info: #3B82F6;
+    --success: #10B981;
+
     /* Variables */
     --sidebar-width: 260px;
     --border-radius-lg: 24px;
     --border-radius-md: 16px;
     --border-radius-sm: 8px;
-    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.15);
-    --shadow-glow: 0 0 20px rgba(29, 160, 118, 0.3);
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -38,13 +56,14 @@ body {
     display: flex;
     height: 100vh;
     overflow: hidden;
+    letter-spacing: 0.2px;
 }
 
 /* SIDEBAR */
 .sidebar {
     width: var(--sidebar-width);
-    background-color: #021e17;
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--section-border);
     display: flex;
     flex-direction: column;
     padding: 24px 16px;
@@ -53,7 +72,7 @@ body {
 }
 
 .brand {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 40px;
@@ -61,8 +80,13 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    letter-spacing: -0.5px;
 }
-.brand i { color: var(--accent-green); font-size: 28px; }
+
+.brand i {
+    color: #FFFFFF;
+    font-size: 30px;
+}
 
 .nav-menu {
     list-style: none;
@@ -78,20 +102,21 @@ body {
     padding: 14px 16px;
     color: var(--text-secondary);
     text-decoration: none;
-    border-radius: var(--border-radius-sm);
+    border-radius: 50px;
+    /* Matching mobile rounded pills */
     font-weight: 500;
-    transition: all 0.3s ease;
+    transition: var(--transition-smooth);
 }
 
 .nav-item a:hover {
-    background-color: rgba(29, 160, 118, 0.1);
+    background-color: rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
 }
 
 .nav-item a.active {
-    background-color: var(--accent-green);
-    color: var(--text-primary);
-    box-shadow: 0 4px 12px rgba(29, 160, 118, 0.4);
+    background: #EAF4EB;
+    /* Light green pill like bottom nav */
+    color: #063124;
 }
 
 .nav-item i {
@@ -103,7 +128,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: radial-gradient(circle at top right, #094736, var(--bg-dark));
+    background-color: var(--bg-dark);
     overflow-y: auto;
 }
 
@@ -114,9 +139,8 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 0 32px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    background-color: rgba(4, 47, 36, 0.8);
-    backdrop-filter: blur(10px);
+    background: linear-gradient(to right, var(--accent-primary-hover), var(--accent-primary));
+    /* Gradasi hijau muda ke hijau tua */
     position: sticky;
     top: 0;
     z-index: 5;
@@ -124,7 +148,8 @@ body {
 
 .topbar-title {
     font-size: 20px;
-    font-weight: 600;
+    font-weight: 700;
+    color: #FFFFFF; /* Diubah ke putih agar terlihat! */
 }
 
 .topbar-actions {
@@ -136,14 +161,11 @@ body {
 .notification-btn {
     background: none;
     border: none;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     font-size: 24px;
     cursor: pointer;
     position: relative;
-    transition: color 0.3s;
 }
-
-.notification-btn:hover { color: var(--text-primary); }
 
 .notification-badge {
     position: absolute;
@@ -160,9 +182,8 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 6px 16px 6px 6px;
-    border-radius: 50px;
+    background-color: transparent;
+    padding: 6px;
     cursor: pointer;
 }
 
@@ -170,48 +191,69 @@ body {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background-color: var(--accent-green);
+    background-color: #EAF4EB;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
+    color: #063124;
 }
 
 /* CONTENT CONTAINER */
 .content {
-    padding: 32px;
+    padding: 16px 32px 32px 32px;
 }
 
-/* SUMMARY CARDS */
+/* SECTION LIS / BORDER (Matching Mobile) */
+.summary-grid,
+.dashboard-grid>div {
+    border: 1px solid var(--section-border);
+    border-radius: 32px;
+    padding: 24px;
+}
+
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
     margin-bottom: 32px;
 }
 
+/* CARDS */
 .stat-card {
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius-lg);
-    padding: 24px;
-    box-shadow: var(--shadow-soft);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: transform 0.3s ease;
+    background: var(--card-bg);
+    border: 1px solid var(--section-border);
+    border-radius: 24px;
+    padding: 24px 16px;
+    box-shadow: none;
+    transition: var(--transition-smooth);
+    text-align: center;
 }
-.stat-card:hover { transform: translateY(-4px); }
 
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Stack icon top, value middle, label bottom using column-reverse */
 .stat-header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 16px;
+    flex-direction: column-reverse;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 0;
+}
+
+.stat-header>div:first-child {
+    text-align: center;
 }
 
 .stat-icon {
     width: 48px;
     height: 48px;
-    background-color: rgba(29, 160, 118, 0.2);
-    color: var(--accent-green);
+    background: rgba(29, 160, 118, 0.1);
+    color: var(--accent-primary);
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -219,33 +261,69 @@ body {
     font-size: 24px;
 }
 
-.stat-value {
-    font-size: 32px;
-    font-weight: 700;
-}
-.stat-label {
-    color: var(--text-secondary);
-    font-size: 14px;
-    margin-top: 4px;
+/* Different colors for icons based on index/type to match colorful mobile icons */
+.stat-card:nth-child(1) .stat-icon {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
 }
 
-/* CHARTS & TABLES */
+/* Masuk / Income */
+.stat-card:nth-child(2) .stat-icon {
+    background: rgba(245, 158, 11, 0.1);
+    color: #F59E0B;
+}
+
+/* Proses / Laundry */
+.stat-card:nth-child(3) .stat-icon {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+}
+
+/* Selesai */
+.stat-card:nth-child(4) .stat-icon {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+}
+
+/* Diambil / Expense */
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-dark);
+    letter-spacing: -0.5px;
+}
+
+.stat-label {
+    color: var(--text-dark-muted);
+    font-size: 13px;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* CHARTS & TABLES (LARGE CARDS) */
 .dashboard-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 24px;
+    border: none;
+    padding: 0;
 }
+
 @media (max-width: 1024px) {
-    .dashboard-grid { grid-template-columns: 1fr; }
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .card {
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius-lg);
-    padding: 24px;
-    box-shadow: var(--shadow-soft);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--card-bg);
+    border: 1px solid var(--section-border);
+    border-radius: 32px;
+    padding: 28px;
+    box-shadow: none;
     margin-bottom: 24px;
+    color: var(--text-dark);
 }
 
 .card-header {
@@ -257,81 +335,142 @@ body {
 
 .card-title {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--text-dark);
 }
 
-/* TABLES */
-table { width: 100%; border-collapse: collapse; }
-th { text-align: left; padding: 16px; color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-td { padding: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+/* TABLES INSIDE CARD */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
 
-.badge { padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; display: inline-block; }
-.badge.masuk { background-color: rgba(52, 152, 219, 0.2); color: var(--info); border: 1px solid rgba(52, 152, 219, 0.3); }
-.badge.proses { background-color: rgba(241, 196, 15, 0.2); color: var(--warning); border: 1px solid rgba(241, 196, 15, 0.3); }
-.badge.selesai { background-color: rgba(29, 160, 118, 0.2); color: var(--accent-green); border: 1px solid rgba(29, 160, 118, 0.3); }
+th {
+    text-align: left;
+    padding: 16px;
+    color: var(--text-dark-muted);
+    font-weight: 600;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-dark);
+}
+
+tr:hover td {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.badge {
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge.masuk {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #60A5FA;
+}
+
+.badge.proses {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #FBBF24;
+}
+
+.badge.selesai {
+    background-color: rgba(139, 92, 246, 0.15);
+    color: #A78BFA;
+}
+
+/* Changed from green to purple */
 
 /* BUTTONS */
 .btn {
-    padding: 10px 20px;
-    border-radius: var(--border-radius-sm);
+    padding: 10px 22px;
+    border-radius: 50px;
     font-weight: 600;
+    font-size: 14px;
     cursor: pointer;
     border: none;
     display: inline-flex;
     align-items: center;
     gap: 8px;
     text-decoration: none;
-    transition: all 0.3s;
+    transition: var(--transition-smooth);
 }
-.btn-primary { background-color: var(--accent-green); color: white; }
-.btn-primary:hover { filter: brightness(1.1); box-shadow: 0 4px 12px rgba(29, 160, 118, 0.4); }
-.btn-outline { background-color: transparent; border: 1px solid var(--text-secondary); color: var(--text-primary); }
-.btn-outline:hover { background-color: rgba(255, 255, 255, 0.05); }
 
-/* FILTERS */
+.btn-primary {
+    background-color: var(--accent-primary);
+    color: #FFF;
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-primary-hover);
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-dark);
+}
+
+.btn-outline:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* FILTERS & INPUTS */
 .filter-bar {
     display: flex;
     gap: 16px;
     margin-bottom: 24px;
 }
+
 .form-control {
-    background-color: rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: white;
-    padding: 10px 16px;
-    border-radius: var(--border-radius-sm);
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--section-border);
+    color: var(--text-dark);
+    padding: 10px 18px;
+    border-radius: 50px;
     outline: none;
+    transition: var(--transition-smooth);
 }
-.form-control:focus { border-color: var(--accent-green); }
+
+.form-control:focus {
+    border-color: var(--accent-primary);
+}
+
+.form-control::placeholder {
+    color: var(--text-dark-muted);
+}
 
 /* CUSTOM SCROLLBAR FOR CHART */
 .chart-scroll-container {
-    width: 100%; 
-    overflow-x: auto; 
-    overflow-y: hidden; 
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
     padding-bottom: 15px;
-    /* Dukungan untuk Firefox */
     scrollbar-width: thin;
-    scrollbar-color: #95A5A6 rgba(255, 255, 255, 0.05);
+    scrollbar-color: #E5E7EB transparent;
 }
 
-/* Chrome, Edge, Safari */
 .chart-scroll-container::-webkit-scrollbar {
-    height: 14px; /* Dibuat lebih tebal agar mudah digeser */
+    height: 8px;
 }
 
 .chart-scroll-container::-webkit-scrollbar-track {
-    background: transparent; /* Transparan agar menyatu dengan background grafik */
-    border-radius: 20px;
+    background: transparent;
 }
 
 .chart-scroll-container::-webkit-scrollbar-thumb {
-    background: #7F8C8D; /* Warna abu-abu terang mirip di gambar */
-    border-radius: 20px;
-    border: 4px solid #0F5C4A; /* Warna sama dengan background card agar menyatu (padding palsu) */
+    background: #D1D5DB;
+    border-radius: 10px;
 }
 
 .chart-scroll-container::-webkit-scrollbar-thumb:hover {
-    background: #BDC3C7; 
+    background: #9CA3AF;
 }

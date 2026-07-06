@@ -21,12 +21,28 @@ class DashboardController extends Controller
         // Untuk chart bulanan (12 bulan terakhir)
         $twelveMonthsAgo = Carbon::today()->startOfMonth()->subMonths(11)->format('Y-m');
 
+        // Ambil daftar user sebagai daftar toko/cabang
+        $branches = [];
+        try {
+            $firestore = app('firebase.firestore')->database();
+            $usersRef = $firestore->collection('users')->documents();
+            foreach ($usersRef as $userDoc) {
+                if ($userDoc->exists()) {
+                    $userData = $userDoc->data();
+                    $branches[$userDoc->id()] = $userData['name'] ?? 'Toko ' . substr($userDoc->id(), 0, 5);
+                }
+            }
+        } catch (\Exception $e) {
+            // Abaikan jika error koneksi
+        }
+
         // Render view dengan data kosong (akan diisi oleh JS di klien)
         return view('monitoring', compact(
             'todayStr', 
             'thisMonthStr', 
             'fifteenDaysAgo', 
-            'twelveMonthsAgo'
+            'twelveMonthsAgo',
+            'branches'
         ));
     }
 }
