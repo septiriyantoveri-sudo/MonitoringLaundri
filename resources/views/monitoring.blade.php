@@ -1,3 +1,6 @@
+<?php
+    $firebaseProjectId = env('FIREBASE_PROJECT_ID', 'cucianlaundri');
+?>
 @extends('layouts.app')
 
 @section('title', 'Dashboard')
@@ -8,28 +11,32 @@
 <div style="display: flex; align-items: center; gap: 8px; background-color: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1);">
     <i class="ph ph-storefront" style="color: var(--accent-green); font-size: 18px;"></i>
     <select id="globalBranchSelector" style="background: transparent; border: none; color: white; outline: none; font-weight: 500; font-size: 14px; cursor: pointer; appearance: none; padding-right: 16px;">
-        <option style="color: black" value="all">Semua Cabang (A-J)</option>
-        <option style="color: black" value="A">Cabang A (Pusat)</option>
-        <option style="color: black" value="B">Cabang B (Melati)</option>
-        <option style="color: black" value="C">Cabang C (Kenanga)</option>
+        <option style="color: black" value="global">Semua Cabang (A-J)</option>
+        <option style="color: black" value="branch_001">Cabang A (Pusat)</option>
+        <option style="color: black" value="branch_002">Cabang B (Melati)</option>
     </select>
     <i class="ph ph-caret-down" style="font-size: 12px; color: var(--text-secondary); margin-left: -12px; pointer-events: none;"></i>
 </div>
 @endsection
 
 @section('content')
+<!-- Connection Status -->
+<div id="firebaseConnectionAlert" style="display: none; background: rgba(231, 76, 60, 0.1); color: var(--danger); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;">
+    <i class="ph ph-warning-circle"></i> Gagal terhubung ke Firebase Realtime. Pastikan API Key diisi dengan benar.
+</div>
+
 <!-- Summary Cards -->
 <div class="summary-grid">
     <div class="stat-card">
         <div class="stat-header">
             <div>
                 <div class="stat-label">Pendapatan Hari Ini</div>
-                <div class="stat-value">Rp {{ number_format($totalPendapatanHariIni, 0, ',', '.') }}</div>
+                <div class="stat-value" id="valPendapatanHariIni">Rp 0</div>
             </div>
             <div class="stat-icon"><i class="ph ph-money"></i></div>
         </div>
         <div style="color: var(--accent-green); font-size: 14px; font-weight: 500;">
-            <i class="ph ph-trend-up"></i> +15% dari kemarin
+            <i class="ph ph-trend-up"></i> Real-Time 🟢
         </div>
     </div>
     
@@ -37,12 +44,12 @@
         <div class="stat-header">
             <div>
                 <div class="stat-label">Pendapatan Bulan Ini</div>
-                <div class="stat-value">Rp {{ number_format($totalPendapatanBulanIni, 0, ',', '.') }}</div>
+                <div class="stat-value" id="valPendapatanBulanIni">Rp 0</div>
             </div>
             <div class="stat-icon"><i class="ph ph-wallet"></i></div>
         </div>
         <div style="color: var(--accent-green); font-size: 14px; font-weight: 500;">
-            <i class="ph ph-trend-up"></i> +5% dari bulan lalu
+            <i class="ph ph-trend-up"></i> Real-Time 🟢
         </div>
     </div>
 
@@ -50,9 +57,19 @@
         <div class="stat-header">
             <div>
                 <div class="stat-label">Total Cucian (Bulan Ini)</div>
-                <div class="stat-value">{{ $totalCucian }}</div>
+                <div class="stat-value" id="valTotalCucian">0</div>
             </div>
             <div class="stat-icon"><i class="ph ph-t-shirt"></i></div>
+        </div>
+    </div>
+
+    <div class="stat-card" style="border-left: 4px solid var(--warning);">
+        <div class="stat-header">
+            <div>
+                <div class="stat-label">Total Piutang (Belum Lunas)</div>
+                <div class="stat-value" style="color: var(--warning);" id="valTotalPiutang">Rp 0</div>
+            </div>
+            <div class="stat-icon" style="background-color: rgba(241, 196, 15, 0.2); color: var(--warning);"><i class="ph ph-warning-circle"></i></div>
         </div>
     </div>
 </div>
@@ -61,17 +78,26 @@
     <!-- Chart Section -->
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Grafik Transaksi (7 Hari Terakhir)</h2>
-            <select class="form-control" style="padding: 6px 12px; width: auto;" id="chartFilter" onchange="updateChartData()">
-                <option style="color: black" value="harian">Harian</option>
-                <option style="color: black" value="mingguan">Mingguan</option>
-                <option style="color: black" value="bulanan">Bulanan</option>
+            <h2 class="card-title">Grafik Transaksi</h2>
+            <select class="form-control" style="padding: 6px 12px; width: auto;" id="chartFilter">
+                <option style="color: black" value="harian">Harian (15 Hari)</option>
+                <option style="color: black" value="bulanan">Bulanan (12 Bulan)</option>
             </select>
         </div>
         <div class="chart-scroll-container">
-            <div style="height: 300px; min-width: 1200px;">
+            <div style="height: 300px; min-width: 1000px;">
                 <canvas id="transactionChart"></canvas>
             </div>
+        </div>
+    </div>
+
+    <!-- Top Services Chart -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Layanan Terlaris (Top 5)</h2>
+        </div>
+        <div style="height: 300px; display: flex; justify-content: center; align-items: center;">
+            <canvas id="servicesChart"></canvas>
         </div>
     </div>
 
@@ -88,43 +114,10 @@
                     <th>Status</th>
                 </tr>
             </thead>
-            <tbody>
-                @if(!$connected)
+            <tbody id="recentTransactionsTable">
                 <tr>
-                    <td colspan="2">
-                        <div style="color: var(--accent-red); font-weight: 500;">
-                            <i class="ph ph-warning"></i> Gagal terhubung ke Firebase: {{ $error }}
-                        </div>
-                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
-                            Pastikan file service-account.json sudah ada di storage/app/firebase_credentials.json dan project ID sudah diisi di .env
-                        </div>
-                    </td>
+                    <td colspan="2" style="text-align: center; color: var(--text-secondary);">Memuat data realtime...</td>
                 </tr>
-                @endif
-
-                @forelse($recentTransactions as $tx)
-                <tr>
-                    <td>
-                        <div style="font-weight: 600">{{ $tx['customerName'] ?? 'Pelanggan' }}</div>
-                        <div style="color: var(--text-secondary); font-size: 12px;">Rp {{ number_format($tx['total'] ?? 0, 0, ',', '.') }}</div>
-                    </td>
-                    <td>
-                        @php
-                            $status = $tx['status'] ?? 'Pesanan Diterima';
-                            $badgeClass = 'masuk';
-                            if (str_contains($status, 'Selesai') || str_contains($status, 'Diambil')) $badgeClass = 'selesai';
-                            elseif (str_contains($status, 'Dicuci') || str_contains($status, 'Diproses')) $badgeClass = 'proses';
-                        @endphp
-                        <span class="badge {{ $badgeClass }}">{{ $status }}</span>
-                    </td>
-                </tr>
-                @empty
-                @if($connected)
-                <tr>
-                    <td colspan="2" style="text-align: center; color: var(--text-secondary);">Belum ada transaksi</td>
-                </tr>
-                @endif
-                @endforelse
             </tbody>
         </table>
     </div>
@@ -133,78 +126,242 @@
 
 @stack('scripts')
 @push('scripts')
+<!-- Konfigurasi Global dari PHP -->
 <script>
-    // Konfigurasi Chart.js untuk Tema Gelap
-    Chart.defaults.color = '#A3C6BC';
-    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+    window.APP_CONFIG = {
+        todayStr: "{{ $todayStr }}",
+        thisMonthStr: "{{ $thisMonthStr }}",
+        fifteenDaysAgo: "{{ $fifteenDaysAgo }}",
+        twelveMonthsAgo: "{{ $twelveMonthsAgo }}",
+        firebaseProjectId: "{{ $firebaseProjectId }}"
+    };
+</script>
 
-    const ctx = document.getElementById('transactionChart').getContext('2d');
-    
-    // Data Dummy untuk filter (menggunakan Tanggal)
-    const chartData = {
-        harian: {
-            // Label berupa Tanggal (15 Hari agar bisa di-scroll horizontal)
-            labels: ['01 Jul', '02 Jul', '03 Jul', '04 Jul', '05 Jul', '06 Jul', '07 Jul', '08 Jul', '09 Jul', '10 Jul', '11 Jul', '12 Jul', '13 Jul', '14 Jul', '15 Jul'],
-            datasets: [
-                { 
-                    label: 'Pendapatan (Rp)', 
-                    data: [150000, 200000, 180000, 320000, 250000, 400000, 350000, 120000, 210000, 300000, 450000, 280000, 390000, 410000, 500000], 
-                    backgroundColor: '#1DA076',
-                    borderRadius: 4
-                }
-            ]
-        },
-        mingguan: {
-            labels: ['Minggu 1 (Jul)', 'Minggu 2 (Jul)', 'Minggu 3 (Jul)', 'Minggu 4 (Jul)', 'Minggu 1 (Ags)', 'Minggu 2 (Ags)', 'Minggu 3 (Ags)', 'Minggu 4 (Ags)'],
-            datasets: [
-                { 
-                    label: 'Pendapatan (Rp)', 
-                    data: [1200000, 1500000, 1350000, 1800000, 1400000, 1600000, 1900000, 2100000], 
-                    backgroundColor: '#1DA076',
-                    borderRadius: 4
-                }
-            ]
-        },
-        bulanan: {
-            labels: ['Jan 2026', 'Feb 2026', 'Mar 2026', 'Apr 2026', 'Mei 2026', 'Jun 2026', 'Jul 2026', 'Ags 2026', 'Sep 2026', 'Okt 2026', 'Nov 2026', 'Des 2026'],
-            datasets: [
-                { 
-                    label: 'Pendapatan (Rp)', 
-                    data: [4500000, 4200000, 5100000, 4800000, 5500000, 6000000, 7200000, 6800000, 7500000, 8100000, 7900000, 9000000], 
-                    backgroundColor: '#1DA076',
-                    borderRadius: 4
-                }
-            ]
-        }
+<!-- Firebase JS SDK (Modular) -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, collection, query, orderBy, limit, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // TODO: Masukkan Firebase Web API Key Anda di sini
+    const firebaseConfig = {
+        apiKey: "MASUKKAN_API_KEY_ANDA_DI_SINI", 
+        authDomain: `${window.APP_CONFIG.firebaseProjectId}.firebaseapp.com`,
+        projectId: window.APP_CONFIG.firebaseProjectId,
     };
 
-    let myChart = new Chart(ctx, {
+    let db;
+    try {
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+    } catch (error) {
+        console.error("Firebase init error", error);
+        document.getElementById('firebaseConnectionAlert').style.display = 'block';
+    }
+
+    // Chart.js Setup
+    Chart.defaults.color = '#A3C6BC';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+    
+    let transactionChart = new Chart(document.getElementById('transactionChart').getContext('2d'), {
         type: 'bar',
-        data: chartData.harian,
+        data: { labels: [], datasets: [] },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: { 
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return 'Rp ' + (value/1000) + 'k';
-                        }
-                    }
-                }
-            }
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return 'Rp ' + (value/1000) + 'k'; } } } }
         }
     });
 
-    // Fungsi untuk memperbarui data saat filter diubah
-    function updateChartData() {
-        const filter = document.getElementById('chartFilter').value;
-        myChart.data = chartData[filter];
-        myChart.update();
+    let servicesChart = new Chart(document.getElementById('servicesChart').getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: [], datasets: [] },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'right', labels: { color: '#FFFFFF', padding: 20 } } }
+        }
+    });
+
+    // Variabel state untuk menyimpan data chart
+    let globalChartData = {
+        harian: { labels: [], datasets: [{ label: 'Pendapatan', data: [], backgroundColor: '#1DA076', borderRadius: 4 }] },
+        bulanan: { labels: [], datasets: [{ label: 'Pendapatan', data: [], backgroundColor: '#1DA076', borderRadius: 4 }] }
+    };
+
+    // Fungsi utilitas untuk format rupiah
+    const formatRp = (angka) => 'Rp ' + new Intl.NumberFormat('id-ID').format(angka || 0);
+
+    // Filter Chart
+    document.getElementById('chartFilter').addEventListener('change', function(e) {
+        const filter = e.target.value;
+        transactionChart.data = globalChartData[filter];
+        transactionChart.update();
+    });
+
+    let activeBranch = document.getElementById('globalBranchSelector').value;
+    
+    // Simpan unsubscribe function agar listener lama bisa dibunuh saat ganti cabang
+    let unsubDaily = null;
+    let unsubMonthly = null;
+    let unsubOrders = null;
+
+    function listenRealtimeData() {
+        if (!db) return;
+
+        // Bunuh listener lama jika ada (agar tidak double/bertabrakan)
+        if (unsubDaily) unsubDaily();
+        if (unsubMonthly) unsubMonthly();
+        if (unsubOrders) unsubOrders();
+
+        // 1. Listen Daily Summary Hari Ini
+        const dailyDocRef = doc(db, 'dashboard_summary_daily', `${activeBranch}_${window.APP_CONFIG.todayStr}`);
+        unsubDaily = onSnapshot(dailyDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('valPendapatanHariIni').innerText = formatRp(data.finance?.totalIncome);
+            } else {
+                document.getElementById('valPendapatanHariIni').innerText = "Rp 0";
+            }
+        });
+
+        // 2. Listen Monthly Summary Bulan Ini
+        const monthlyDocRef = doc(db, 'dashboard_summary_monthly', `${activeBranch}_${window.APP_CONFIG.thisMonthStr}`);
+        unsubMonthly = onSnapshot(monthlyDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('valPendapatanBulanIni').innerText = formatRp(data.finance?.totalIncome);
+                document.getElementById('valTotalCucian').innerText = data.operations?.totalOrders || 0;
+                document.getElementById('valTotalPiutang').innerText = formatRp(data.finance?.totalPiutang);
+
+                // Update Services Chart
+                const services = data.servicesCount || {};
+                const sortedServices = Object.entries(services).sort((a,b) => b[1] - a[1]).slice(0,5);
+                
+                servicesChart.data = {
+                    labels: sortedServices.length > 0 ? sortedServices.map(s => s[0]) : ['Belum ada data'],
+                    datasets: [{
+                        data: sortedServices.length > 0 ? sortedServices.map(s => s[1]) : [1],
+                        backgroundColor: ['#1DA076', '#3498DB', '#F1C40F', '#E74C3C', '#9B59B6'],
+                        borderWidth: 0
+                    }]
+                };
+                servicesChart.update();
+            } else {
+                document.getElementById('valPendapatanBulanIni').innerText = "Rp 0";
+                document.getElementById('valTotalCucian').innerText = "0";
+                document.getElementById('valTotalPiutang').innerText = "Rp 0";
+                servicesChart.data = { labels: ['Belum ada data'], datasets: [{ data: [1], backgroundColor: ['#ccc'] }] };
+                servicesChart.update();
+            }
+        });
+
+        // 3. Ambil data Harian dan Bulanan historis untuk Chart (Sekali ambil, tidak perlu realtime berlebihan)
+        loadChartDataHistoris();
+
+        // 4. Listen Transaksi Terbaru (5 data terakhir)
+        let ordersQuery;
+        if (activeBranch === 'global') {
+            ordersQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(5));
+        } else {
+            ordersQuery = query(collection(db, 'orders'), where('branchId', '==', activeBranch), orderBy('createdAt', 'desc'), limit(5));
+        }
+
+        unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
+            const tableBody = document.getElementById('recentTransactionsTable');
+            tableBody.innerHTML = ''; // Kosongkan tabel
+            
+            if (snapshot.empty) {
+                tableBody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: var(--text-secondary);">Belum ada transaksi</td></tr>';
+                return;
+            }
+
+            snapshot.forEach((docSnap) => {
+                const tx = docSnap.data();
+                let status = tx.status || tx.orderStatus || 'Pesanan Diterima';
+                let badgeClass = 'masuk';
+                if (status.includes('Selesai') || status.includes('Diambil')) badgeClass = 'selesai';
+                else if (status.includes('Dicuci') || status.includes('Diproses')) badgeClass = 'proses';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight: 600">${tx.customerName || tx.customer?.name || 'Pelanggan'}</div>
+                        <div style="color: var(--text-secondary); font-size: 12px;">${formatRp(tx.total || tx.totalAmount)}</div>
+                    </td>
+                    <td>
+                        <span class="badge ${badgeClass}">${status}</span>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        });
     }
+
+    async function loadChartDataHistoris() {
+        if (!db) return;
+        
+        try {
+            // Load Harian (15 Hari)
+            const qDaily = query(collection(db, 'dashboard_summary_daily'), 
+                where('branchId', '==', activeBranch), 
+                where('date', '>=', window.APP_CONFIG.fifteenDaysAgo));
+            
+            const snapDaily = await getDocs(qDaily);
+            let dailyMap = {};
+            snapDaily.forEach(doc => { dailyMap[doc.data().date] = doc.data().finance?.totalIncome || 0; });
+
+            // Bentuk Array Harian berurutan
+            let tempLabelsHarian = [];
+            let tempHarianData = [];
+            const today = new Date();
+            for (let i = 14; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                const strDate = d.toISOString().split('T')[0];
+                tempLabelsHarian.push(d.toLocaleDateString('id-ID', {day:'2-digit', month:'short'}));
+                tempHarianData.push(dailyMap[strDate] || 0);
+            }
+            globalChartData.harian.labels = tempLabelsHarian;
+            globalChartData.harian.datasets[0].data = tempHarianData;
+
+            // Load Bulanan (12 Bulan)
+            const qMonthly = query(collection(db, 'dashboard_summary_monthly'), 
+                where('branchId', '==', activeBranch), 
+                where('month', '>=', window.APP_CONFIG.twelveMonthsAgo));
+                
+            const snapMonthly = await getDocs(qMonthly);
+            let monthlyMap = {};
+            snapMonthly.forEach(doc => { monthlyMap[doc.data().month] = doc.data().finance?.totalIncome || 0; });
+
+            let tempLabelsBulanan = [];
+            let tempBulananData = [];
+            for (let i = 11; i >= 0; i--) {
+                const m = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                const strMonth = m.toISOString().slice(0,7); // YYYY-MM
+                tempLabelsBulanan.push(m.toLocaleDateString('id-ID', {month:'short', year:'numeric'}));
+                tempBulananData.push(monthlyMap[strMonth] || 0);
+            }
+            globalChartData.bulanan.labels = tempLabelsBulanan;
+            globalChartData.bulanan.datasets[0].data = tempBulananData;
+
+            // Set default view ke Harian
+            if (document.getElementById('chartFilter').value === 'harian') {
+                transactionChart.data = globalChartData.harian;
+                transactionChart.update();
+            }
+
+        } catch (error) {
+            console.error("Gagal load history chart", error);
+        }
+    }
+
+    // Jalankan realtime listener
+    listenRealtimeData();
+
+    // Event listener untuk ganti cabang
+    document.getElementById('globalBranchSelector').addEventListener('change', function(e) {
+        activeBranch = e.target.value;
+        listenRealtimeData();
+    });
+
 </script>
 @endpush

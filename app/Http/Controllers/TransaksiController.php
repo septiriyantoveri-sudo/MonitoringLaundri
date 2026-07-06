@@ -12,29 +12,50 @@ class TransaksiController extends Controller
             $firestore = app('firebase.firestore')->database();
             
             $transactions = [];
-            $usersRef = $firestore->collection('users')->documents();
+            
+            // Baca dari global collection 'orders' dengan limit untuk performa
+            // Sebaiknya ditambah orderBy createdAt descending jika index sudah ada
+            $ordersRef = $firestore->collection('orders')
+                // ->orderBy('createdAt', 'DESC') // Uncomment jika sudah buat index di Firestore
+                ->limit(50)
+                ->documents();
 
-            foreach ($usersRef as $userDoc) {
-                if (!$userDoc->exists()) continue;
-                $userData = $userDoc->data();
-                $userId = $userDoc->id();
+            foreach ($ordersRef as $doc) {
+                if (!$doc->exists()) continue;
+                
+                $order = $doc->data();
+                $order['id'] = $doc->id();
+                $order['pegawai'] = $order['cashierName'] ?? $order['pegawai'] ?? '-';
+                $transactions[] = $order;
+            }
 
-                try {
-                    $ordersRef = $firestore->collection('users')
-                        ->document($userId)
-                        ->collection('orders')
-                        ->documents();
+            // Fallback (jika data belum dimigrasi ke global orders, baca 10 terakhir per user dari sub-collection)
+            // Ini bisa dihapus jika aplikasi kasir sudah 100% menggunakan global orders
+            if (empty($transactions)) {
+                $usersRef = $firestore->collection('users')->documents();
+                foreach ($usersRef as $userDoc) {
+                    if (!$userDoc->exists()) continue;
+                    $userData = $userDoc->data();
+                    $userId = $userDoc->id();
 
-                    foreach ($ordersRef as $orderDoc) {
-                        if (!$orderDoc->exists()) continue;
-                        
-                        $order = $orderDoc->data();
-                        $order['id'] = $orderDoc->id();
-                        $order['pegawai'] = $userData['name'] ?? '-';
-                        $transactions[] = $order;
+                    try {
+                        $oldOrdersRef = $firestore->collection('users')
+                            ->document($userId)
+                            ->collection('orders')
+                            ->limit(5) // Limit agar tidak terlalu lambat
+                            ->documents();
+
+                        foreach ($oldOrdersRef as $oldOrderDoc) {
+                            if (!$oldOrderDoc->exists()) continue;
+                            
+                            $order = $oldOrderDoc->data();
+                            $order['id'] = $oldOrderDoc->id();
+                            $order['pegawai'] = $userData['name'] ?? '-';
+                            $transactions[] = $order;
+                        }
+                    } catch (\Exception $e) {
+                        // skip
                     }
-                } catch (\Exception $e) {
-                    // skip
                 }
             }
 

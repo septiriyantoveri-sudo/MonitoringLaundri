@@ -118,8 +118,7 @@
 
             branchSelector.addEventListener('change', function () {
                 localStorage.setItem('selectedBranch', this.value);
-                // Opsional: Muat ulang halaman untuk mensimulasikan pembaruan data
-                window.location.reload();
+                // Kita menghapus window.location.reload() agar dashboard bisa 100% realtime tanpa refresh
             });
         }
     </script>

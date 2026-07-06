@@ -13,22 +13,28 @@ class AbsensiController extends Controller
             $firestore = app('firebase.firestore')->database();
             
             $absensi = [];
+            $todayHadir = 0;
+            $todayIzin = 0;
+            $todaySakit = 0;
+            $todayAlpa = 0;
             
-            // Coba ambil dari koleksi 'attendance' (global)
-            try {
-                $attendanceRef = $firestore->collection('attendance')->documents();
-                foreach ($attendanceRef as $doc) {
-                    if (!$doc->exists()) continue;
-                    
-                    $data = $doc->data();
-                    $data['id'] = $doc->id();
-                    $absensi[] = $data;
-                }
-            } catch (\Exception $e) {
-                // skip
+            // Ambil dari koleksi 'attendance' (global) dengan limit untuk mencegah out of memory
+            // Sebaiknya ditambah orderBy date descending jika ada index
+            $attendanceRef = $firestore->collection('attendance')
+                // ->orderBy('date', 'DESC') // Uncomment jika index sudah dibuat di firebase
+                ->limit(100)
+                ->documents();
+
+            foreach ($attendanceRef as $doc) {
+                if (!$doc->exists()) continue;
+                
+                $data = $doc->data();
+                $data['id'] = $doc->id();
+                $absensi[] = $data;
             }
 
-            // Jika kosong, mungkin disimpan di subcollection users/{userId}/attendance
+            // Fallback (jika data belum dimigrasi ke global attendance, baca 50 terakhir dari sub-collection)
+            // Ini bisa dihapus jika aplikasi kasir sudah 100% menggunakan global attendance
             if (empty($absensi)) {
                 $usersRef = $firestore->collection('users')->documents();
                 foreach ($usersRef as $userDoc) {
@@ -40,6 +46,7 @@ class AbsensiController extends Controller
                         $attRef = $firestore->collection('users')
                             ->document($userId)
                             ->collection('attendance')
+                            ->limit(10) // Limit per user agar tidak berat
                             ->documents();
 
                         foreach ($attRef as $attDoc) {
@@ -63,14 +70,41 @@ class AbsensiController extends Controller
                 return strcmp($dateB, $dateA);
             });
 
+            // Calculate summaries for today
+            foreach ($absensi as $ab) {
+                $tanggal = $ab['date'] ?? $ab['createdAt'] ?? $ab['timestamp'] ?? null;
+                if ($tanggal) {
+                    try {
+                        if (Carbon::parse($tanggal)->isToday()) {
+                            $status = strtolower($ab['status'] ?? 'hadir');
+                            if (str_contains($status, 'izin')) {
+                                $todayIzin++;
+                            } elseif (str_contains($status, 'sakit')) {
+                                $todaySakit++;
+                            } elseif (str_contains($status, 'alpa') || str_contains($status, 'absen')) {
+                                $todayAlpa++;
+                            } else {
+                                $todayHadir++;
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // ignore parse error
+                    }
+                }
+            }
+
             $connected = true;
             $error = null;
         } catch (\Exception $e) {
             $absensi = [];
+            $todayHadir = 0;
+            $todayIzin = 0;
+            $todaySakit = 0;
+            $todayAlpa = 0;
             $connected = false;
             $error = $e->getMessage();
         }
 
-        return view('absensi.index', compact('absensi', 'connected', 'error'));
+        return view('absensi.index', compact('absensi', 'todayHadir', 'todayIzin', 'todaySakit', 'todayAlpa', 'connected', 'error'));
     }
 }
