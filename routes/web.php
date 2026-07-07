@@ -15,9 +15,9 @@ use App\Http\Controllers\TransaksiController;
 
 Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
 
-Route::get('/pelanggan', function () {
-    return view('pelanggan.index');
-})->name('pelanggan.index');
+use App\Http\Controllers\PelangganController;
+
+Route::get('/pelanggan', [PelangganController::class, 'index'])->name('pelanggan.index');
 
 use App\Http\Controllers\PegawaiController;
 
@@ -26,13 +26,9 @@ Route::get('/pegawai', [PegawaiController::class, 'index'])->name('pegawai.index
 use App\Http\Controllers\AbsensiController;
 Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
 
-Route::get('/laporan', function () {
-    return view('laporan.index');
-})->name('laporan.index');
-
 use App\Http\Controllers\PengeluaranController;
 
-Route::get('/pengeluaran', [PengeluaranController::class, 'index'])->name('pengeluaran.index');
+Route::get('/laporan', [PengeluaranController::class, 'index'])->name('laporan.index');
 
 use App\Http\Controllers\InventarisController;
 
@@ -41,3 +37,9 @@ Route::post('/inventaris', [InventarisController::class, 'store'])->name('invent
 Route::put('/inventaris/{id}', [InventarisController::class, 'update'])->name('inventaris.update');
 Route::delete('/inventaris/{id}', [InventarisController::class, 'destroy'])->name('inventaris.destroy');
 Route::post('/inventaris/{id}/restock', [InventarisController::class, 'restock'])->name('inventaris.restock');
+
+use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\AduanController;
+
+Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
+Route::get('/aduan', [AduanController::class, 'index'])->name('aduan.index');

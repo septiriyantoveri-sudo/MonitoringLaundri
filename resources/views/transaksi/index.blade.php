@@ -5,10 +5,14 @@
 
 @section('content')
 <div class="card">
-    <div class="card-header">
-        <h2 class="card-title">Semua Transaksi Laundry</h2>
-        <div class="filter-bar" style="margin-bottom: 0;">
-            <input type="text" class="form-control" placeholder="Cari ID/Nama Pelanggan...">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h2 class="card-title" style="margin: 0;">Transaksi Tanggal {{ \Carbon\Carbon::parse(request('date', \Carbon\Carbon::today()->format('Y-m-d')))->format('d M Y') }}</h2>
+        <div class="filter-bar" style="margin-bottom: 0; display: flex; gap: 1rem; align-items: center;">
+            <form action="{{ route('transaksi.index') }}" method="GET" style="margin: 0; display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                <i class="ph ph-calendar-blank" style="color: var(--accent-blue);"></i>
+                <input type="date" name="date" value="{{ request('date', \Carbon\Carbon::today()->format('Y-m-d')) }}" onchange="this.form.submit()" style="background: transparent; border: none; color: white; outline: none; font-family: inherit; font-size: 0.9rem; cursor: pointer;">
+            </form>
+            <input type="text" class="form-control" placeholder="Cari ID/Nama..." style="max-width: 200px;">
         </div>
     </div>
     

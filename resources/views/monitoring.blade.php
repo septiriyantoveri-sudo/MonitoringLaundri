@@ -14,51 +14,42 @@
     <i class="ph ph-warning-circle"></i> Gagal terhubung ke Firebase Realtime. Pastikan API Key diisi dengan benar.
 </div>
 
-<!-- Summary Cards -->
-<div class="summary-grid">
+<!-- Status Order Hari Ini -->
+<div class="summary-grid" style="grid-template-columns: repeat(4, 1fr); margin-top: 24px;">
     <div class="stat-card">
         <div class="stat-header">
             <div>
-                <div class="stat-label">Pendapatan Hari Ini</div>
-                <div class="stat-value" id="valPendapatanHariIni">Rp 0</div>
+                <div class="stat-label">Total Order Hari Ini</div>
+                <div class="stat-value" style="color: var(--accent-blue);">{{ $orderStatusCounts['total'] }}</div>
             </div>
-            <div class="stat-icon"><i class="ph ph-money"></i></div>
-        </div>
-        <div style="color: var(--accent-green); font-size: 14px; font-weight: 500;">
-            <i class="ph ph-trend-up"></i> Real-Time 🟢
+            <div class="stat-icon" style="background-color: rgba(59, 130, 246, 0.2); color: var(--accent-blue);"><i class="ph ph-clipboard-text"></i></div>
         </div>
     </div>
-    
     <div class="stat-card">
         <div class="stat-header">
             <div>
-                <div class="stat-label">Pendapatan Bulan Ini</div>
-                <div class="stat-value" id="valPendapatanBulanIni">Rp 0</div>
+                <div class="stat-label">Sedang Diproses</div>
+                <div class="stat-value" style="color: #E67E22;">{{ $orderStatusCounts['diproses'] }}</div>
             </div>
-            <div class="stat-icon"><i class="ph ph-wallet"></i></div>
-        </div>
-        <div style="color: var(--accent-green); font-size: 14px; font-weight: 500;">
-            <i class="ph ph-trend-up"></i> Real-Time 🟢
+            <div class="stat-icon" style="background-color: rgba(230, 126, 34, 0.2); color: #E67E22;"><i class="ph ph-spinner"></i></div>
         </div>
     </div>
-
     <div class="stat-card">
         <div class="stat-header">
             <div>
-                <div class="stat-label">Total Cucian (Bulan Ini)</div>
-                <div class="stat-value" id="valTotalCucian">0</div>
+                <div class="stat-label">Selesai (Belum Diambil)</div>
+                <div class="stat-value" style="color: var(--accent-green);">{{ $orderStatusCounts['selesai'] }}</div>
             </div>
-            <div class="stat-icon"><i class="ph ph-t-shirt"></i></div>
+            <div class="stat-icon"><i class="ph ph-check-circle"></i></div>
         </div>
     </div>
-
-    <div class="stat-card" style="border-left: 4px solid var(--warning);">
+    <div class="stat-card">
         <div class="stat-header">
             <div>
-                <div class="stat-label">Total Piutang (Belum Lunas)</div>
-                <div class="stat-value" style="color: var(--warning);" id="valTotalPiutang">Rp 0</div>
+                <div class="stat-label">Sudah Diambil</div>
+                <div class="stat-value" style="color: #8B5CF6;">{{ $orderStatusCounts['diambil'] }}</div>
             </div>
-            <div class="stat-icon" style="background-color: rgba(241, 196, 15, 0.2); color: var(--warning);"><i class="ph ph-warning-circle"></i></div>
+            <div class="stat-icon" style="background-color: rgba(139, 92, 246, 0.2); color: #8B5CF6;"><i class="ph ph-handshake"></i></div>
         </div>
     </div>
 </div>
@@ -69,7 +60,7 @@
         <div class="card-header">
             <h2 class="card-title">Grafik Transaksi</h2>
             <select class="form-control" style="padding: 6px 12px; width: auto;" id="chartFilter">
-                <option style="color: black" value="harian">Harian (15 Hari)</option>
+                <option style="color: black" value="harian">Harian (Bulan Ini)</option>
                 <option style="color: black" value="bulanan">Bulanan (12 Bulan)</option>
             </select>
         </div>
@@ -89,9 +80,62 @@
             <canvas id="servicesChart"></canvas>
         </div>
     </div>
-
-
 </div>
+
+<!-- Ranking Cabang -->
+@if(count($branchRanking) > 1)
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h2 class="card-title"><i class="ph ph-trophy" style="color: #D4AF37;"></i> Ranking Performa Cabang (Bulan Ini)</h2>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="width: 60px;">#</th>
+                <th>Nama Cabang / Toko</th>
+                <th>Jumlah Transaksi</th>
+                <th>Total Pendapatan</th>
+                <th>Kontribusi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php
+                $totalAllIncome = array_sum(array_column($branchRanking, 'income'));
+            @endphp
+            @foreach($branchRanking as $index => $branch)
+            <tr>
+                <td>
+                    @if($index === 0)
+                        <span style="font-size: 20px;">🥇</span>
+                    @elseif($index === 1)
+                        <span style="font-size: 20px;">🥈</span>
+                    @elseif($index === 2)
+                        <span style="font-size: 20px;">🥉</span>
+                    @else
+                        <span style="font-weight: 600; color: var(--text-secondary);">{{ $index + 1 }}</span>
+                    @endif
+                </td>
+                <td style="font-weight: 600;">{{ $branch['name'] }}</td>
+                <td>{{ $branch['orders'] }} transaksi</td>
+                <td style="font-weight: 600; color: var(--accent-green);">Rp {{ number_format($branch['income'], 0, ',', '.') }}</td>
+                <td>
+                    @php
+                        $percent = $totalAllIncome > 0 ? round(($branch['income'] / $totalAllIncome) * 100, 1) : 0;
+                    @endphp
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="flex: 1; background: rgba(255,255,255,0.05); border-radius: 10px; height: 8px; overflow: hidden;">
+                            <div style="width: {{ $percent }}%; background: linear-gradient(90deg, #D4AF37, #14B8A6); height: 100%; border-radius: 10px; transition: width 0.5s ease;"></div>
+                        </div>
+                        <span style="font-size: 13px; font-weight: 600; min-width: 42px;">{{ $percent }}%</span>
+                    </div>
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@endif
+
 @endsection
 
 @stack('scripts')
@@ -101,7 +145,7 @@
     window.APP_CONFIG = {
         todayStr: "{{ $todayStr }}",
         thisMonthStr: "{{ $thisMonthStr }}",
-        fifteenDaysAgo: "{{ $fifteenDaysAgo }}",
+        firstDayOfMonth: "{{ $firstDayOfMonth }}",
         twelveMonthsAgo: "{{ $twelveMonthsAgo }}",
         firebaseProjectId: "{{ $firebaseProjectId }}"
     };
@@ -138,7 +182,7 @@
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return 'Rp ' + (value/1000) + 'k'; }, color: '#FFFFFF' } }, x: { ticks: { color: '#FFFFFF' } } },
+            scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return (value/1000) + 'k'; }, color: '#FFFFFF' } }, x: { ticks: { color: '#FFFFFF' } } },
             plugins: { legend: { labels: { color: '#FFFFFF' } } }
         }
     });
@@ -186,12 +230,7 @@
         // 1. Listen Daily Summary Hari Ini
         const dailyDocRef = doc(db, 'dashboard_summary_daily', `${activeBranch}_${window.APP_CONFIG.todayStr}`);
         unsubDaily = onSnapshot(dailyDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                document.getElementById('valPendapatanHariIni').innerText = formatRp(data.finance?.totalIncome);
-            } else {
-                document.getElementById('valPendapatanHariIni').innerText = "Rp 0";
-            }
+            // Data harian tidak ditampilkan lagi di summary card
         });
 
         // 2. Listen Monthly Summary Bulan Ini
@@ -199,9 +238,9 @@
         unsubMonthly = onSnapshot(monthlyDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                document.getElementById('valPendapatanBulanIni').innerText = formatRp(data.finance?.totalIncome);
-                document.getElementById('valTotalCucian').innerText = data.operations?.totalOrders || 0;
-                document.getElementById('valTotalPiutang').innerText = formatRp(data.finance?.totalPiutang);
+                if (document.getElementById('valTotalPiutang')) {
+                    document.getElementById('valTotalPiutang').innerText = formatRp(data.finance?.totalPiutang);
+                }
 
                 // Update Services Chart
                 const services = data.servicesCount || {};
@@ -217,9 +256,9 @@
                 };
                 servicesChart.update();
             } else {
-                document.getElementById('valPendapatanBulanIni').innerText = "Rp 0";
-                document.getElementById('valTotalCucian').innerText = "0";
-                document.getElementById('valTotalPiutang').innerText = "Rp 0";
+                if (document.getElementById('valTotalPiutang')) {
+                    document.getElementById('valTotalPiutang').innerText = "Rp 0";
+                }
                 servicesChart.data = { labels: ['Belum ada data'], datasets: [{ data: [1], backgroundColor: ['#ccc'] }] };
                 servicesChart.update();
             }
@@ -235,24 +274,29 @@
         if (!db) return;
         
         try {
-            // Load Harian (15 Hari)
+            // Load Harian (Bulan Ini)
             const qDaily = query(collection(db, 'dashboard_summary_daily'), 
                 where('branchId', '==', activeBranch), 
-                where('date', '>=', window.APP_CONFIG.fifteenDaysAgo));
+                where('date', '>=', window.APP_CONFIG.firstDayOfMonth));
             
             const snapDaily = await getDocs(qDaily);
             let dailyMap = {};
             snapDaily.forEach(doc => { dailyMap[doc.data().date] = doc.data().finance?.totalIncome || 0; });
 
-            // Bentuk Array Harian berurutan
+            // Bentuk Array Harian berurutan untuk seluruh hari di bulan ini (1-30/31)
             let tempLabelsHarian = [];
             let tempHarianData = [];
             const today = new Date();
-            for (let i = 14; i >= 0; i--) {
-                const d = new Date(today);
-                d.setDate(d.getDate() - i);
-                const strDate = d.toISOString().split('T')[0];
-                tempLabelsHarian.push(d.toLocaleDateString('id-ID', {day:'2-digit', month:'short'}));
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayStr = String(i).padStart(2, '0');
+                const monthStr = String(month + 1).padStart(2, '0');
+                const strDate = `${year}-${monthStr}-${dayStr}`;
+                
+                tempLabelsHarian.push(i.toString()); // Menampilkan 1, 2, ..., 31
                 tempHarianData.push(dailyMap[strDate] || 0);
             }
             globalChartData.harian.labels = tempLabelsHarian;

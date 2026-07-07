@@ -61,17 +61,17 @@
                     <i class="ph ph-package"></i> Inventaris
                 </a>
             </li>
-            <li class="nav-item">
-                <a href="{{ route('pengeluaran.index') }}"
-                    class="{{ request()->routeIs('pengeluaran.*') ? 'active' : '' }}">
-                    <i class="ph ph-money"></i> Pengeluaran
-                </a>
-            </li>
+
         </ul>
         <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
             <ul class="nav-menu">
                 <li class="nav-item">
-                    <a href="#">
+                    <a href="{{ route('aduan.index') }}" class="{{ request()->routeIs('aduan.*') ? 'active' : '' }}">
+                        <i class="ph ph-chat-circle-dots"></i> Pusat Bantuan
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('profil.index') }}" class="{{ request()->routeIs('profil.*') ? 'active' : '' }}">
                         <i class="ph ph-user"></i> Profil
                     </a>
                 </li>
@@ -109,10 +109,51 @@
 
                 @yield('topbar_actions')
 
-                <button class="notification-btn">
-                    <i class="ph ph-bell"></i>
-                    <span class="notification-badge"></span>
-                </button>
+                <div class="notification-wrapper" style="position: relative;">
+                    <button class="notification-btn" id="notifBtn" onclick="toggleNotifPanel()">
+                        <i class="ph ph-bell"></i>
+                        @if(isset($notificationCount) && $notificationCount > 0)
+                            <span class="notification-badge" style="display: flex;">{{ $notificationCount }}</span>
+                        @else
+                            <span class="notification-badge" style="display: none;"></span>
+                        @endif
+                    </button>
+
+                    <!-- Notification Panel -->
+                    <div id="notifPanel" style="display: none; position: absolute; top: 48px; right: 0; width: 360px; max-height: 400px; overflow-y: auto; background: var(--card-bg, #1a1f2e); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 1000; padding: 0;">
+                        <div style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 600; font-size: 15px; display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="ph ph-bell-ringing"></i> Notifikasi</span>
+                            <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); font-size: 12px;">{{ $notificationCount ?? 0 }}</span>
+                        </div>
+                        @if(isset($notifications) && count($notifications) > 0)
+                            @foreach($notifications as $notif)
+                            <div style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; gap: 12px; align-items: flex-start; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                                @php
+                                    $iconColor = '#3B82F6';
+                                    $iconBg = 'rgba(59, 130, 246, 0.15)';
+                                    if ($notif['type'] === 'warning') { $iconColor = '#F59E0B'; $iconBg = 'rgba(245, 158, 11, 0.15)'; }
+                                    elseif ($notif['type'] === 'danger') { $iconColor = '#EF4444'; $iconBg = 'rgba(239, 68, 68, 0.15)'; }
+                                @endphp
+                                <div style="width: 36px; height: 36px; border-radius: 10px; background: {{ $iconBg }}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="ph {{ $notif['icon'] }}" style="color: {{ $iconColor }}; font-size: 18px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 13px; line-height: 1.4;">{{ $notif['message'] }}</div>
+                                    @if(!empty($notif['time']))
+                                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">{{ \Carbon\Carbon::parse($notif['time'])->diffForHumans() }}</div>
+                                    @endif
+                                </div>
+                            </div>
+                            @endforeach
+                        @else
+                            <div style="padding: 32px; text-align: center; color: var(--text-secondary);">
+                                <i class="ph ph-check-circle" style="font-size: 32px; display: block; margin-bottom: 8px; color: var(--accent-green);"></i>
+                                Tidak ada notifikasi baru
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
                 <div class="user-profile">
                     <div class="avatar">V</div>
                     <div>
@@ -131,7 +172,18 @@
 
     @stack('scripts')
     <script>
-
+    function toggleNotifPanel() {
+        const panel = document.getElementById('notifPanel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        const wrapper = document.querySelector('.notification-wrapper');
+        const panel = document.getElementById('notifPanel');
+        if (wrapper && panel && !wrapper.contains(e.target)) {
+            panel.style.display = 'none';
+        }
+    });
     </script>
 </body>
 

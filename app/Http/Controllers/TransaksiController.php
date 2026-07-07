@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 
 class TransaksiController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         try {
             $firestore = app('firebase.firestore')->database();
@@ -14,33 +14,37 @@ class TransaksiController extends Controller
             $transactions = [];
             
             $activeBranch = session('activeBranch', 'global');
+            $selectedDate = $request->input('date', \Carbon\Carbon::today()->format('Y-m-d'));
             
-            // Baca dari global collection 'orders' dengan limit untuk performa
+            // Baca dari global collection 'orders'
             $ordersQuery = $firestore->collection('orders');
             if ($activeBranch !== 'global') {
                 $ordersQuery = $ordersQuery->where('branchId', '==', $activeBranch);
             }
-            $ordersRef = $ordersQuery->limit(50)->documents();
+            // Ambil semua data (tanpa limit) lalu filter di PHP berdasarkan tanggal
+            $ordersRef = $ordersQuery->documents();
 
             foreach ($ordersRef as $doc) {
                 if (!$doc->exists()) continue;
                 
                 $order = $doc->data();
+                $createdAt = $order['createdAt'] ?? '';
+                
+                // Filter berdasarkan tanggal (hari) yang dipilih
+                if (strpos($createdAt, $selectedDate) !== 0) {
+                    continue;
+                }
+
                 $order['id'] = $doc->id();
                 $order['pegawai'] = $order['cashierName'] ?? $order['pegawai'] ?? '-';
                 $transactions[] = $order;
             }
 
-            // Fallback (jika data belum dimigrasi ke global orders, baca 10 terakhir per user dari sub-collection)
+            // Fallback (jika data belum dimigrasi ke global orders)
             if (empty($transactions)) {
                 if ($activeBranch !== 'global') {
-                    // Hanya satu user
                     $userDoc = $firestore->collection('users')->document($activeBranch)->snapshot();
-                    if ($userDoc->exists()) {
-                        $usersToProcess = [$userDoc];
-                    } else {
-                        $usersToProcess = [];
-                    }
+                    $usersToProcess = $userDoc->exists() ? [$userDoc] : [];
                 } else {
                     $usersToProcess = $firestore->collection('users')->documents();
                 }
@@ -54,13 +58,19 @@ class TransaksiController extends Controller
                         $oldOrdersRef = $firestore->collection('users')
                             ->document($userId)
                             ->collection('orders')
-                            ->limit(5) // Limit agar tidak terlalu lambat
                             ->documents();
 
                         foreach ($oldOrdersRef as $oldOrderDoc) {
                             if (!$oldOrderDoc->exists()) continue;
                             
                             $order = $oldOrderDoc->data();
+                            $createdAt = $order['createdAt'] ?? '';
+                            
+                            // Filter berdasarkan tanggal
+                            if (strpos($createdAt, $selectedDate) !== 0) {
+                                continue;
+                            }
+
                             $order['id'] = $oldOrderDoc->id();
                             $order['pegawai'] = $userData['name'] ?? '-';
                             $transactions[] = $order;
